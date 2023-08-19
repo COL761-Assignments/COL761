@@ -75,12 +75,11 @@ bool numericComparator(const std::string &a, const std::string &b) {
 }
 
 
-void test_1()
+void compress(string path_to_dataset,string path_to_output)
 {   
     auto start = high_resolution_clock::now();
 
-    std::ifstream inputFile("/home/rutvik/Desktop/sem7/COL761/A1/D_medium.dat"); 
-    // std::ifstream inputFile("/home/rutvik/Desktop/sem7/COL761/A1/test.dat"); 
+    std::ifstream inputFile(path_to_dataset); 
     if (!inputFile.is_open()) {
         std::cerr << "Failed to open the file." << std::endl;
     }
@@ -115,7 +114,7 @@ void test_1()
     std::cout << "Execution Time: " << duration.count() << " ms\n";
     cout << "finding frequent itemsets completed " << patterns.size() << endl;
 
-    vector<pair<vector<string>,int64_t>> freq_items = {};
+    vector<pair<vector<string>,int64_t>> freq_items = {}; //This is unnecessary as sets are already sorted and can be accessed with a for loop.
 
     for (auto i:patterns){
         if (i.first.size()>1) { //i.first.size()>12 || (i.first.size()>1 && i.first.size()<5)){
@@ -155,7 +154,7 @@ void test_1()
 
     for (auto& transaction:transactions){
         for(auto& itemset:freq_items){
-            if (transaction.size()<0){
+            if (transaction.size()<0){  // is this necessary to check?
                 break;
             }
             g(transaction,itemset);
@@ -198,13 +197,21 @@ void test_1()
 
 }
 
+void decompress(string path_to_compressed_dataset,string path_to_reconstructed_dataset){
+
+}
+
 
 
 int main(int argc, const char *argv[])
 {
     auto start = high_resolution_clock::now();
-
-    test_1();
+    if(argv[1] == "compress"){
+        compress(argv[2],argv[3]);
+    }
+    else{
+        decompress(argv[2],argv[3]);
+    }
 
     auto end = high_resolution_clock::now();
 
