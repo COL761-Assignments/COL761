@@ -131,6 +131,8 @@ unordered_map<Item, Transaction> Compress(vector<Transaction> &transactions, uin
 
     sort(freq_items.begin(), freq_items.end(), compare);
 
+    // cout << "size of freq_items " << patterns.size() << ' ' <<  freq_items.size() << endl;
+
     std::string freqItemsFileName = "freq_items_1500.txt";
     std::ofstream freqItemsFile(freqItemsFileName, std::ios::app);
     if (!freqItemsFile.is_open())
@@ -155,6 +157,7 @@ unordered_map<Item, Transaction> Compress(vector<Transaction> &transactions, uin
     freqItemsFile.close();
 
     unordered_map<Item, Transaction> decoder;
+    long long int compress_ratio = 0;
     for (auto &transaction : transactions)
     {
         for (auto &itemset : freq_items)
@@ -165,6 +168,7 @@ unordered_map<Item, Transaction> Compress(vector<Transaction> &transactions, uin
             }
             f(transaction, itemset, decoder);
         }
+        compress_ratio += transaction.size();
         for (auto item : transaction)
         {
             if (pre_decoder.find(item) != pre_decoder.end())
@@ -173,13 +177,16 @@ unordered_map<Item, Transaction> Compress(vector<Transaction> &transactions, uin
             }
         }
     }
+    decoder["count"] = {to_string(compress_ratio)};
 
     return decoder;
 }
 
 void compress(string path_to_dataset, string path_to_output)
 {
+    auto start = high_resolution_clock::now();
 
+    long long int total_items = 0;
     std::ifstream inputFile(path_to_dataset);
     if (!inputFile.is_open())
     {
@@ -205,6 +212,7 @@ void compress(string path_to_dataset, string path_to_output)
 
         sort(tokens.begin(), tokens.end(), numericComparator);
         max_item = max(max_item, stoll(tokens[tokens.size() - 1]));
+        total_items += tokens.size();
         transactions.push_back(tokens);
     }
     inputFile.close();
@@ -234,7 +242,7 @@ void compress(string path_to_dataset, string path_to_output)
 
     cout << "var" << var << endl;
     cout << "mean" << mean << endl;
-    uint64_t threshold = max_freq;
+    uint64_t threshold = mean+var;
     cout << "median" << median << endl;
     unordered_map<Item, Transaction> pre_decoder = {};
     unordered_map<Item, Transaction> decoder = Compress(transactions, threshold, pre_decoder);
@@ -254,20 +262,46 @@ void compress(string path_to_dataset, string path_to_output)
 
     cout << "Done one recurrsion" << endl; 
 
-    threshold = 9500;
-    for(int i=0;i<48;i++){
+    long long int compress_count;
+    long long int compress_ratio;
+
+    int pre_compression = 100;
+    int i=0;
+    while(threshold > 10){  //&& threshold > mean-var){
+        compress_count = stoll(decoder["count"][0]);
+        compress_ratio = ((total_items - compress_count)*100)/total_items;
+        std::cout << "threshold " << threshold << endl;
+
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(end - start);
+
+        if(duration.count()>2700000){
+            break;
+        }
+        if (compress_ratio<6){
+            threshold = (0.5*threshold);
+        }
+        else if(compress_ratio<15){
+            threshold = (0.65*threshold);
+        }
+        else{
+            threshold = (0.8*threshold);
+        }
         pre_decoder = decoder;
         decoder = Compress(transactions, threshold, pre_decoder);
         g(pre_decoder,decoder); 
-        threshold -= 200;
+        // threshold = threshold/2;
         cout << "Done " << i+2 << "th  recurrsion" << endl;
+        i++;
     }
 
+    cout << "hello";
     std::string decodedFileName2 = path_to_output;
     std::ofstream decodedFile2(decodedFileName2);
 
     for (auto &i : decoder)
     {
+        if (i.first =="count"){continue;} 
         decodedFile2 << i.first << "\n";
         int temp = 0, var = i.second.size();
         for (auto &j : i.second)
