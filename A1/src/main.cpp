@@ -259,8 +259,14 @@ void compress(string path_to_dataset, string path_to_output)
     for (auto &i : decoder)
     {
         decodedFile2 << i.first << "\n";
+        int temp = 0, var = i.second.size();
         for (auto &j : i.second)
         {
+            if(temp==var-1){
+                decodedFile2 << j;
+                continue;
+            }
+            temp++;
             decodedFile2 << j << " ";
         }
         decodedFile2 << "\n";
@@ -314,14 +320,9 @@ void decompress(string path_to_compressed_dataset, string path_to_reconstructed_
 
         if (isDecoderSection)
         {
-            if (line[0] == 'L')
-            {
-                key = line;
-            }
-            else
-            {
-                decoderMap[key] = line;
-            }
+            key = line;
+            getline(compressedFile, line);
+            decoderMap[key] = line;
         }
         else
         {
