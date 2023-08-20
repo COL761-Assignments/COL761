@@ -188,6 +188,8 @@ void compress(string path_to_dataset, string path_to_output)
 
     std::vector<std::vector<std::string>> transactions;
     std::string line;
+    unordered_map<string,int> mp;
+    int max_freq = 1;
     while (std::getline(inputFile, line))
     {
         std::vector<std::string> tokens;
@@ -197,6 +199,8 @@ void compress(string path_to_dataset, string path_to_output)
         while (tokenStream >> token)
         {
             tokens.push_back(token);
+            if(mp.find(token) != mp.end()) {mp[token]++; max_freq = max(max_freq,mp[token]);}
+            else mp[token] = 1;
         }
 
         sort(tokens.begin(), tokens.end(), numericComparator);
@@ -207,50 +211,56 @@ void compress(string path_to_dataset, string path_to_output)
 
     label = -1 * (max_item + 1);
 
-    uint64_t threshold = 2500;
+    long long mean=0,sum=0,temp,var,num,median;
+
+    num = mp.size();
+
+    for(auto it=mp.begin();it != mp.end();it++){
+        temp = it->second;
+        sum += temp;
+    }
+    mean = sum/num;sum = 0;
+    vector<int> freqs;
+    for(auto it=mp.begin();it != mp.end();it++){
+        temp = (it->second - mean);
+        sum += temp*temp;
+        freqs.push_back(it->second);
+    }
+    sort(freqs.begin(),freqs.end());
+    var = sum/num;
+    var = sqrt(var);
+    median = freqs[freqs.size()/2];
+
+
+    cout << "var" << var << endl;
+    cout << "mean" << mean << endl;
+    uint64_t threshold = max_freq;
+    cout << "median" << median << endl;
     unordered_map<Item, Transaction> pre_decoder = {};
     unordered_map<Item, Transaction> decoder = Compress(transactions, threshold, pre_decoder);
-
-    std::string decodedFileName = "decoded_1500.txt";
-    std::ofstream decodedFile(decodedFileName);
-
-    for (auto &i : transactions)
-    {
-        for (auto &j : i)
-        {
-            decodedFile << j << " ";
-        }
-
-        decodedFile << "\n";
-    }
-
-    decodedFile.close();
 
     std::string decoderFileName = "decoder_1500.txt";
     std::ofstream decoderFile(decoderFileName);
 
-    for (auto &i : decoder)
-    {
+    for (auto& i : decoder) {
         decoderFile << i.first << "\n";
-        for (auto &j : i.second)
-        {
+        for (auto& j : i.second) {
             decoderFile << j << " ";
         }
-        decoderFile << "\n";
+        decoderFile <<  "\n";
     }
 
     decoderFile.close();
 
-    cout << "Done one recurrsion" << endl;
+    cout << "Done one recurrsion" << endl; 
 
-    threshold = 2300;
-    for (int i = 0; i < 10; i++)
-    {
+    threshold = 9500;
+    for(int i=0;i<48;i++){
         pre_decoder = decoder;
         decoder = Compress(transactions, threshold, pre_decoder);
-        g(pre_decoder, decoder);
+        g(pre_decoder,decoder); 
         threshold -= 200;
-        cout << "Done " << i + 2 << "th  recurrsion" << endl;
+        cout << "Done " << i+2 << "th  recurrsion" << endl;
     }
 
     std::string decodedFileName2 = path_to_output;
@@ -354,7 +364,6 @@ int main(int argc, const char *argv[])
     string operation = argv[1];
     if (operation == "compress")
     {
-        cout << "compress evolked";
         compress(argv[2], argv[3]);
     }
     else
