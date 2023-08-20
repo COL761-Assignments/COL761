@@ -217,25 +217,21 @@ void compress(string path_to_dataset, string path_to_output){
     std::string decodedFileName2 = "decoded_1500_2.txt";
     std::ofstream decodedFile2(decodedFileName2);
 
+    for (auto& i : decoded) {
+        decodedFile2 << i.first << "\n";
+        for (auto& j : i.second) {
+            decodedFile2 << j << " ";
+        }
+        decodedFile2 <<  "\n";
+    }
+
+    decodedFile2 << "$$$";
+
     for (auto& i : transactions) {
         for (auto& j : i) {
             decodedFile2 << j << " ";
         }
-
         decodedFile2 << "\n";
-    }
-
-    decodedFile2.close();
-
-    std::string decoderFileName2 = "decoder_1500_2.txt";
-    std::ofstream decoderFile2(decoderFileName2);
-
-    for (auto& i : decoder) {
-        decoderFile2 << i.first << "\n";
-        for (auto& j : i.second) {
-            decoderFile2 << j << " ";
-        }
-        decoderFile2 <<  "\n";
     }
 
     decoderFile2.close();
@@ -312,7 +308,8 @@ void decompress(string path_to_compressed_dataset, string path_to_reconstructed_
 int main(int argc, const char *argv[])
 {
     auto start = high_resolution_clock::now();
-    if (argv[1] == "compress")
+    string operation = argv[1];
+    if (operation == "compress")
     {
         cout << "compress evolked";
         compress(argv[2], argv[3]);
