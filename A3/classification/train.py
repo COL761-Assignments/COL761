@@ -228,7 +228,7 @@ def main():
         lr = 0.003
         hidden_channels =64
         outchanels = 32
-        num_epochs = 6
+        num_epochs = 60
         
 
     # val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
